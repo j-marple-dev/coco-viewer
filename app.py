@@ -6,8 +6,9 @@ import colorsys
 import json
 import logging
 import tkinter as tk
+import math
 
-from PIL import Image, ImageDraw, ImageTk
+from PIL import Image, ImageDraw, ImageTk, ImageFont
 
 from navigation import ImageList
 
@@ -112,6 +113,9 @@ class App(tk.Tk):
 
             # draw masks
             for c, m in zip(obj_categories, masks):
+                if not m:
+                    continue
+
                 alpha = 75
                 fill = tuple(list(c[-1]) + [alpha])
                 # Polygonal masks work fine
@@ -125,7 +129,24 @@ class App(tk.Tk):
 
         # Draw bboxes
         for c, b in zip(obj_categories, bboxes):
-            draw.rectangle(b, outline=c[-1])
+            draw.rectangle(b, outline=c[-1], width=3)
+
+        title1 = img_name
+        title2 = f"# of bboxes: {len(bboxes)}"
+        title3 = "Bounding box sizes: "
+        title3 += ", ".join([f"{int(math.sqrt((box[2]-box[0]) * (box[3]-box[1]))):,d}" for box in bboxes])
+        title3 += "\nBounding box ratios: "
+        title3 += ", ".join([f"{(box[2]-box[0]) / (box[3]-box[1]):.2f}" for box in bboxes])
+
+        font = ImageFont.truetype(font="Arial.ttf", size=25)
+
+        text_size1 = font.getsize(title1)
+        text_size3 = font.getsize(max([t for t in title3.split("\n")], key=len))
+
+        draw.text(((img_open.width//2) - (text_size1[0]//2), 5 + text_size1[1]), title1, align='center', fill=(255, 255, 255), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+
+        draw.text((20, 5 + text_size1[1]), title2, align='left', fill=(255, 255, 255), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
+        draw.text((img_open.width - 30 - text_size3[0], 5 + text_size3[1]), title3, align='right', fill=(255, 255, 255), font=font, stroke_width=2, stroke_fill=(0, 0, 0))
 
         del draw
 
