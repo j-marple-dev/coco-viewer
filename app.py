@@ -75,6 +75,9 @@ class App(tk.Tk):
         random.shuffle(colors)
         random.seed(None)
 
+        # I didn't like the color number 3
+        colors[3], colors[6] = colors[6], colors[3]
+
         # Parse categories
         categories = list(zip([[category['id'], category['name']] for category in self.instances['categories']], colors))
         return dict([[cat[0][0], [cat[0][1], cat[1]]] for cat in categories])
@@ -127,9 +130,23 @@ class App(tk.Tk):
                 else:
                     continue
 
-        # Draw bboxes
+        # Draw bboxes with class name
         for c, b in zip(obj_categories, bboxes):
-            draw.rectangle(b, outline=c[-1], width=3)
+            draw.rectangle(b, outline=c[-1]+(150,), width=3)
+            font_size = 25
+
+            font = ImageFont.truetype(font="Arial.ttf", size=font_size)
+
+            text_size_obj = font.getsize(c[0])
+            while text_size_obj[0] > (b[2]-b[0]):
+                font_size -= 1
+                font = ImageFont.truetype(font="Arial.ttf", size=font_size)
+                text_size_obj = font.getsize(c[0])
+
+            draw.rectangle([b[0], b[1], b[0]+text_size_obj[0], b[1]-text_size_obj[1]], fill=c[-1]+(150,))
+            draw.text((b[0], b[1]-text_size_obj[1]), c[0], align='left', fill=(255, 255, 255), font=font)
+
+        font = ImageFont.truetype(font="Arial.ttf", size=25)
 
         title1 = img_name
         title2 = f"# of bboxes: {len(bboxes)}"
@@ -137,8 +154,6 @@ class App(tk.Tk):
         title3 += ", ".join([f"{int(math.sqrt((box[2]-box[0]) * (box[3]-box[1]))):,d}" for box in bboxes])
         title3 += "\nBounding box ratios: "
         title3 += ", ".join([f"{(box[2]-box[0]) / (box[3]-box[1]):.2f}" for box in bboxes])
-
-        font = ImageFont.truetype(font="Arial.ttf", size=25)
 
         text_size1 = font.getsize(title1)
         text_size3 = font.getsize(max([t for t in title3.split("\n")], key=len))
